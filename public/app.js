@@ -102,10 +102,36 @@ const TRAVEL = [
   { max: Infinity, modes: [['Train', '🚆', 55, 50, 1, 'transit'], ['Bus', '🚌', 45, 50, 1.6, 'transit'], ['Car', '🚗', 50, 0, 9, 'driving']] },
 ];
 
+// Rough per-person entry fees for Indian visitors, by the kind Wikidata gives the place.
+const ENTRY = [
+  [/temple|mosque|church|dargah|shrine|beach|market|street/i, 0],
+  [/zoo|national park|sanctuary|reserve|aquarium/i, 100],
+  [/lake|garden|park/i, 20],
+  [/museum|gallery|memorial|palace/i, 50],
+  [/fort|monument|heritage|archaeolog/i, 40],
+  [/waterfall|falls|dam|hill|viewpoint/i, 30],
+];
+
+function tripCost(trip, place) {
+  const road = place.distance_km * 1.3;
+  const { modes } = TRAVEL.find((t) => place.distance_km <= t.max);
+  const travel = (2 * modes.reduce((sum, [, , , base, perKm]) => sum + base + perKm * road, 0)) / modes.length;
+  const entry = ENTRY.find(([re]) => re.test(`${place.kind} ${place.name}`))?.[1] ?? 30;
+  const hours = trip.hours ?? 8;
+  const food = hours <= 4 ? 100 : hours <= 10 ? 300 : 900;
+  const stay = hours > 24 ? 1500 : 0;
+  return { travel, entry, food, stay, total: travel + entry + food + stay };
+}
+
+const costChip = (trip, place) =>
+  `<span class="chip cost" title="Estimate per person: return travel, entry and food${trip.hours > 24 ? ', and one night’s stay' : ''}">💰 ~${rupees(tripCost(trip, place).total)} per person</span>`;
+
 function renderRoutes(trip) {
   const { place } = trip.recommendation;
   const road = place.distance_km * 1.3;
   const { modes } = TRAVEL.find((t) => place.distance_km <= t.max);
+  const cost = tripCost(trip, place);
+  const line = (label, n) => `<li><span>${label}</span><strong>${n ? rupees(n) : 'Free'}</strong></li>`;
   const dirs = (mode) =>
     `https://www.google.com/maps/dir/?api=1&origin=${trip.location.lat},${trip.location.lon}&destination=${place.lat},${place.lon}&travelmode=${mode}`;
   const routes = modes
@@ -124,6 +150,14 @@ function renderRoutes(trip) {
   return `
     <p class="send-note">About ${Math.round(road)} km by road from ${esc(trip.location.name)} to ${esc(place.name)}. Times and fares are rough estimates.</p>
     <div class="routes">${routes}</div>
+    <h4>Average cost per person</h4>
+    <ul class="cost-list">
+      ${line('Travel there and back (average of the options above)', cost.travel)}
+      ${line('Entry fee', cost.entry)}
+      ${line('Food and snacks', cost.food)}
+      ${cost.stay ? line('One night’s stay', cost.stay) : ''}
+      <li class="total"><span>Total</span><strong>~${rupees(cost.total)}</strong></li>
+    </ul>
     <a class="directions" href="${esc(dirs(modes[0][5]))}" target="_blank" rel="noopener">🗺️ Directions from ${esc(trip.location.name)}</a>`;
 }
 
@@ -249,7 +283,7 @@ function renderNearby(trip) {
           <strong>${esc(p.name)}</strong>
           <span class="chip">${esc(p.kind)} · ${p.distance_km.toFixed(1)} km</span>
         </div>
-        <div class="chips">${ratingChip(p, trip)}</div>
+        <div class="chips">${ratingChip(p, trip)}${costChip(trip, p)}</div>
         ${p.description ? `<p class="note">${esc(p.description)}</p>` : ''}
         <div class="links">
           <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Map ↗</a>
@@ -281,6 +315,7 @@ function itineraryText(trip) {
     ...r.plan.map((p) => `• ${p}`),
     '',
     `Carry: ${packingList(trip).map((p) => p.item).join(', ')}`,
+    `Average cost: ~${rupees(tripCost(trip, r.place).total)} per person`,
     `Map: ${r.place.maps_url}`,
     `Ratings and reviews: ${reviewsUrl(r.place, trip)}`,
     ...(r.backups.length ? ['', `Backups: ${r.backups.map((b) => b.name).join(', ')}`] : []),
@@ -377,6 +412,7 @@ function renderTrip(trip) {
           <span class="chip">⏱️ ${esc(trip.duration)}</span>
           <span class="chip">🏷️ ${esc(r.place.kind)}</span>
           ${ratingChip(r.place, trip)}
+          ${costChip(trip, r.place)}
         </div>
       </div>
       <div class="actions"><button class="delete ghost" title="Remove this trip" aria-label="Remove this trip">✕</button></div>

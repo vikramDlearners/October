@@ -214,6 +214,12 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); }
 .chip.rating { color: #b7791f; font-weight: 600; text-decoration: none; background: rgba(236, 179, 46, 0.14); }
 .chip.rating:hover { background: rgba(236, 179, 46, 0.26); }
+.chip.cost { color: var(--accent-2); font-weight: 600; }
+.cost-list { list-style: none; padding: 0; margin: 0 0 14px; font-size: 14px; }
+.cost-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--soft); }
+.cost-list li span { color: var(--muted); }
+.cost-list .total { border-bottom: 0; font-size: 15px; }
+.cost-list .total span { color: inherit; font-weight: 600; }
 .actions { display: flex; gap: 6px; flex-shrink: 0; }
 .actions button { padding: 8px 13px; font-size: 13px; }
 
