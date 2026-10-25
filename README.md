@@ -4,8 +4,9 @@ Tell the sloth where you are and how much time you have. It checks the weather, 
 
 Built for the Hacktoberfest Open-Source AI Challenge, Week 3 ("Slow and Steady").
 
+- **Frontend repo (this repo):** https://github.com/vikramDlearners/October
+- **Backend repo (planner API, FastAPI + Gemma):** https://github.com/vikramDlearners/October_backend
 - **Live frontend:** https://vikramdlearners.github.io/October/
-- **Planner backend (FastAPI, Gemma):** https://github.com/vikramDlearners/October_backend
 
 ## What you get
 
