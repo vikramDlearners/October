@@ -221,6 +221,13 @@ function renderWeather(trip) {
     ${day ? `<p class="send-note">${esc(niceDate(day.date))}: ${esc(day.summary)}. Sunrise ${esc(day.sunrise?.slice(-5))}, sunset ${esc(day.sunset?.slice(-5))}.</p>` : ''}`;
 }
 
+// Searching by name and town opens Google's place panel, which carries the rating and reviews; a lat,lon search only drops a pin.
+const reviewsUrl = (place, trip) => {
+  const town = trip.location.name.split(',')[0].trim();
+  const query = place.name.toLowerCase().includes(town.toLowerCase()) ? place.name : `${place.name}, ${town}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
 function renderNearby(trip) {
   const pick = trip.recommendation.place.name;
   return `<ul class="places">${trip.places
@@ -232,6 +239,7 @@ function renderNearby(trip) {
         </div>
         ${p.description ? `<p class="note">${esc(p.description)}</p>` : ''}
         <div class="links">
+          <a href="${esc(reviewsUrl(p, trip))}" target="_blank" rel="noopener">⭐ Ratings and reviews ↗</a>
           <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Map ↗</a>
           ${p.wikipedia_url ? `<a href="${esc(p.wikipedia_url)}" target="_blank" rel="noopener">Wikipedia ↗</a>` : ''}
         </div>
@@ -262,6 +270,7 @@ function itineraryText(trip) {
     '',
     `Carry: ${packingList(trip).map((p) => p.item).join(', ')}`,
     `Map: ${r.place.maps_url}`,
+    `Ratings and reviews: ${reviewsUrl(r.place, trip)}`,
     ...(r.backups.length ? ['', `Backups: ${r.backups.map((b) => b.name).join(', ')}`] : []),
   ].join('\n');
 }
@@ -355,6 +364,7 @@ function renderTrip(trip) {
           <span class="chip">📍 ${esc(r.place.distance_km.toFixed(1))} km from ${esc(trip.location.name)}</span>
           <span class="chip">⏱️ ${esc(trip.duration)}</span>
           <span class="chip">🏷️ ${esc(r.place.kind)}</span>
+          <a class="chip" href="${esc(reviewsUrl(r.place, trip))}" target="_blank" rel="noopener">⭐ Ratings and reviews ↗</a>
         </div>
       </div>
       <div class="actions"><button class="delete ghost" title="Remove this trip" aria-label="Remove this trip">✕</button></div>
