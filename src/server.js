@@ -13,6 +13,9 @@ const PUBLIC_DIR = join(process.cwd(), 'public');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// The browser only talks to this server. The trip planner API is plain http with no CORS headers, and its address stays private.
+const TRIP_API_URL = (process.env.TRIP_API_URL || 'http://20.55.33.206:8000').replace(/\/+$/, '');
+const TRIP_PATH = /^\/api\/trip(\/status|\/weekend\/[a-z-]+)$/;
 // Lets a frontend hosted on another origin call the API. Set CORS_ORIGIN to that origin to lock it down.
 const CORS = {
   'access-control-allow-origin': process.env.CORS_ORIGIN || '*',
@@ -35,6 +38,24 @@ async function readBody(req) {
   } catch {
     throw new HttpError(400, 'Body must be JSON.');
   }
+}
+
+async function proxyTrip(req, res, path) {
+  let raw = '';
+  for await (const chunk of req) raw += chunk;
+  let upstream;
+  try {
+    upstream = await fetch(TRIP_API_URL + path, {
+      method: req.method,
+      headers: raw ? { 'content-type': 'application/json' } : undefined,
+      body: raw || undefined,
+      signal: AbortSignal.timeout(150_000),
+    });
+  } catch {
+    return send(res, 502, { error: 'The trip planner is not reachable right now. Try again in a minute.' });
+  }
+  res.writeHead(upstream.status, { ...CORS, 'content-type': upstream.headers.get('content-type') ?? 'application/json' });
+  res.end(Buffer.from(await upstream.arrayBuffer()));
 }
 
 async function parseWatch(body) {
@@ -129,6 +150,8 @@ createServer(async (req, res) => {
     return res.end();
   }
   try {
+    const trip = TRIP_PATH.exec(pathname);
+    if (trip) return proxyTrip(req, res, trip[1]);
     const handler = matchRoute(req.method, pathname);
     if (handler) return send(res, 200, await handler(req));
     if (req.method === 'GET' && (await serveStatic(pathname, res))) return;

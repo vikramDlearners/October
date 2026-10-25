@@ -17,78 +17,52 @@
         <span class="logo">🦥</span>
         <div>
           <h1>Sloth Trip Watcher</h1>
-          <p class="tagline">Tell it once. Do nothing. It tells you when to go, how to get there, and what to pack.</p>
+          <p class="tagline">Say where you are and how long you've got. The sloth checks the weather, nearby places and the news, then tells you where to go, how to get there and what to pack.</p>
         </div>
       </div>
       <div id="status" class="status"></div>
-      <details class="backend">
-        <summary><span id="conn-dot" class="dot"></span> Backend</summary>
-        <form id="connect-form" class="connect">
-          <input id="api-base" placeholder="https://your-server.example.com (blank = this server)" autocomplete="url" aria-label="Backend URL">
-          <button type="submit">Connect</button>
-          <p id="conn" class="conn" role="status"></p>
-        </form>
-      </details>
     </div>
   </header>
 
   <main>
-    <section class="card new-watch">
-      <h2>Plan a lazy trip</h2>
-      <p class="sub">Set it once. The sloth checks the weather every few hours.</p>
-      <form id="watch-form">
-        <label>Where to?
-          <input name="destination" placeholder="Pondicherry" required>
-        </label>
-        <label>Starting from
-          <input name="origin" placeholder="Chennai" required>
-        </label>
-        <div class="row">
-          <label>Earliest
-            <input name="from" type="date" required>
+    <aside class="side">
+      <section class="card new-trip">
+        <h2>Plan my weekend</h2>
+        <p class="sub">One question, one plan. Takes about half a minute.</p>
+        <form id="trip-form">
+          <label>Where are you?
+            <input name="location" placeholder="Chennai" minlength="2" maxlength="200" required autocomplete="address-level2">
           </label>
-          <label>Latest
-            <input name="to" type="date" required>
-          </label>
-        </div>
-        <label>Budget per person (₹, all-in)
-          <input name="budgetInr" type="number" min="100" step="100" value="5000" required>
-        </label>
-        <label>Vibe <span class="hint">optional</span>
-          <input name="vibe" placeholder="beaches, cafés, quiet">
-        </label>
-        <div class="checks">
-          <label class="toggle"><input type="checkbox" name="weekendsOnly" checked><span>Weekends only</span></label>
-          <label class="toggle"><input type="checkbox" name="noRain" checked><span>No rain</span></label>
-        </div>
-        <button type="submit" class="primary">Start watching</button>
-        <p id="form-error" class="error" hidden></p>
-      </form>
-    </section>
+          <fieldset class="durations">
+            <legend>How much time, including travel?</legend>
+            <label class="toggle"><input type="radio" name="duration" value="3 hours"><span>3 hours</span></label>
+            <label class="toggle"><input type="radio" name="duration" value="half day"><span>Half day</span></label>
+            <label class="toggle"><input type="radio" name="duration" value="full day" checked><span>Full day</span></label>
+            <label class="toggle"><input type="radio" name="duration" value="whole weekend"><span>Whole weekend</span></label>
+          </fieldset>
+          <button type="submit" class="primary">Find my trip</button>
+          <p id="form-error" class="error" hidden></p>
+        </form>
+      </section>
+
+      <section class="card chat">
+        <h2>Or just chat</h2>
+        <p class="sub">Answer two questions and get the same plan.</p>
+        <ol id="chat-log" class="chat-log" aria-live="polite"></ol>
+        <form id="chat-form" class="chat-form">
+          <input name="message" placeholder="Type a reply…" maxlength="300" required autocomplete="off" aria-label="Your reply">
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </aside>
 
     <section class="list">
-      <h2 class="list-title">Watching</h2>
-      <div id="watches"></div>
+      <h2 class="list-title">Your trips</h2>
+      <div id="trips"></div>
     </section>
   </main>
 
-  <footer>Weather by Open-Meteo · places by Google Maps via SerpApi · plans by Gemma</footer>
-
-  <template id="watch-tpl">
-    <article class="card watch">
-      <div class="watch-head">
-        <div>
-          <h3 class="dest"></h3>
-          <div class="chips"></div>
-        </div>
-        <div class="actions">
-          <button class="check-now">Check now</button>
-          <button class="delete ghost" title="Stop watching" aria-label="Stop watching">✕</button>
-        </div>
-      </div>
-      <div class="result"></div>
-    </article>
-  </template>
+  <footer>Weather, nearby places and news checked live · plans by AI · your packing ticks stay in this browser</footer>
 
   <script type="module" src="app.js"></script>
 </body>

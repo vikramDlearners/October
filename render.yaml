@@ -25,6 +25,10 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
+      - key: TRIP_API_URL
+        value: http://20.55.33.206:8000
+      - key: CORS_ORIGIN
+        value: https://vikramdlearners.github.io
       - key: ITINERARY_API_URL
         sync: false
       - key: ITINERARY_API_KEY

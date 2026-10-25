@@ -99,24 +99,6 @@ h3 { margin: 0; font-size: 22px; }
 .pill.on { background: rgb(255 255 255 / 20%); color: #fff; }
 .pill.on::before { content: "● "; color: #a6f0b8; }
 
-.backend { flex-basis: 100%; font-size: 13px; }
-.backend summary { cursor: pointer; width: fit-content; opacity: 0.85; list-style: none; }
-.backend summary::-webkit-details-marker { display: none; }
-.backend summary::after { content: " ▾"; }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #bbb; vertical-align: 1px; }
-.dot.ok { background: #a6f0b8; }
-.dot.bad { background: #ffb4a8; }
-.connect {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px 8px;
-  max-width: 560px;
-}
-.connect input { background: rgb(255 255 255 / 92%); color: #222; border-color: transparent; }
-.connect button { background: #fff; color: var(--hero-1); }
-.conn { grid-column: 1 / -1; margin: 0; font-size: 12px; opacity: 0.9; }
-
 /* Layout */
 main {
   max-width: 1120px;
@@ -129,7 +111,6 @@ main {
 }
 @media (max-width: 800px) {
   main { grid-template-columns: minmax(0, 1fr); }
-  .new-watch { position: static !important; }
 }
 
 .card {
@@ -140,13 +121,12 @@ main {
   box-shadow: var(--shadow);
 }
 
-.new-watch { position: sticky; top: 16px; }
 form { display: grid; gap: 12px; }
 label { display: grid; gap: 5px; font-size: 13px; font-weight: 500; color: var(--muted); }
 .hint { font-size: 11px; font-weight: 400; opacity: 0.7; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-input:not([type="checkbox"]) {
+input:not([type="checkbox"], [type="radio"]) {
   width: 100%;
   font: inherit;
   color: var(--ink);
@@ -156,7 +136,7 @@ input:not([type="checkbox"]) {
   padding: 10px 12px;
   transition: border-color 0.15s, background 0.15s;
 }
-input:not([type="checkbox"]):focus { outline: none; border-color: var(--accent); background: var(--card); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+input:not([type="checkbox"], [type="radio"]):focus { outline: none; border-color: var(--accent); background: var(--card); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
 
 .checks { display: flex; gap: 8px; flex-wrap: wrap; }
 .toggle { display: inline-flex; cursor: pointer; }
@@ -193,7 +173,7 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 /* Watch cards */
 .list-title { color: var(--hero-ink); margin: 0 0 12px; height: 32px; display: flex; align-items: end; }
 @media (max-width: 800px) { .list-title { color: var(--ink); height: auto; margin-top: 8px; } }
-#watches { display: grid; gap: 18px; }
+#trips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .watch-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); }
@@ -342,3 +322,38 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 .error { color: var(--error); margin: 10px 0 0; font-size: 13px; }
 
 footer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 32px; }
+
+/* Plan form */
+.side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.durations { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.durations legend { padding: 0; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* Chat */
+.chat-log { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; max-height: 280px; overflow-y: auto; }
+.bubble { max-width: 88%; padding: 8px 12px; border-radius: 14px; font-size: 14px; white-space: pre-line; }
+.bubble.bot { background: var(--soft); border-bottom-left-radius: 4px; }
+.bubble.me { justify-self: end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+.bubble.typing { color: var(--muted); letter-spacing: 0.2em; }
+.bubble.error { color: var(--error); }
+.chat-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+
+/* Waiting */
+.thinking { display: flex; gap: 14px; align-items: center; }
+.thinking .sloth { font-size: 34px; animation: sway 2.4s ease-in-out infinite; }
+.thinking .secs { font-variant-numeric: tabular-nums; }
+@keyframes sway { 50% { transform: rotate(-12deg); } }
+@media (prefers-reduced-motion: reduce) { .thinking .sloth { animation: none; } }
+
+/* Trip extras */
+h4 { margin: 18px 0 8px; font-size: 14px; }
+.backups, .news, .news-notes { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+.news a { color: var(--ink); font-weight: 500; }
+.places { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.places li { padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; }
+.places li.picked { border-color: var(--go); background: color-mix(in srgb, var(--go-bg) 60%, var(--card)); }
+.place-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.places .note { margin: 6px 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.links { display: flex; gap: 14px; margin-top: 8px; font-size: 13px; }
+.links a, .route a.note { color: var(--accent-2); }
+.share-row { display: flex; gap: 8px; margin-top: 10px; }
+.share-row button { padding: 9px 13px; font-size: 13px; }
