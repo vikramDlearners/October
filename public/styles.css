@@ -212,6 +212,8 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 .watch-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); }
+.chip.rating { color: #b7791f; font-weight: 600; text-decoration: none; background: rgba(236, 179, 46, 0.14); }
+.chip.rating:hover { background: rgba(236, 179, 46, 0.26); }
 .actions { display: flex; gap: 6px; flex-shrink: 0; }
 .actions button { padding: 8px 13px; font-size: 13px; }
 

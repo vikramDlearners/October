@@ -228,6 +228,18 @@ const reviewsUrl = (place, trip) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
+// Placeholder until the planner returns real Google ratings: seeded by the place name so a place keeps the same rating across reloads.
+function sampleRating(place) {
+  let h = 0;
+  for (const c of place.name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { stars: (3.6 + (h % 14) / 10).toFixed(1), reviews: 50 + ((h >>> 4) % 9950) };
+}
+
+const ratingChip = (place, trip) => {
+  const { stars, reviews } = sampleRating(place);
+  return `<a class="chip rating" href="${esc(reviewsUrl(place, trip))}" target="_blank" rel="noopener" title="Sample rating. Open Google for the real one.">⭐ ${stars} · ${reviews.toLocaleString('en-IN')} reviews ↗</a>`;
+};
+
 function renderNearby(trip) {
   const pick = trip.recommendation.place.name;
   return `<ul class="places">${trip.places
@@ -237,9 +249,9 @@ function renderNearby(trip) {
           <strong>${esc(p.name)}</strong>
           <span class="chip">${esc(p.kind)} · ${p.distance_km.toFixed(1)} km</span>
         </div>
+        <div class="chips">${ratingChip(p, trip)}</div>
         ${p.description ? `<p class="note">${esc(p.description)}</p>` : ''}
         <div class="links">
-          <a href="${esc(reviewsUrl(p, trip))}" target="_blank" rel="noopener">⭐ Ratings and reviews ↗</a>
           <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Map ↗</a>
           ${p.wikipedia_url ? `<a href="${esc(p.wikipedia_url)}" target="_blank" rel="noopener">Wikipedia ↗</a>` : ''}
         </div>
@@ -364,7 +376,7 @@ function renderTrip(trip) {
           <span class="chip">📍 ${esc(r.place.distance_km.toFixed(1))} km from ${esc(trip.location.name)}</span>
           <span class="chip">⏱️ ${esc(trip.duration)}</span>
           <span class="chip">🏷️ ${esc(r.place.kind)}</span>
-          <a class="chip" href="${esc(reviewsUrl(r.place, trip))}" target="_blank" rel="noopener">⭐ Ratings and reviews ↗</a>
+          ${ratingChip(r.place, trip)}
         </div>
       </div>
       <div class="actions"><button class="delete ghost" title="Remove this trip" aria-label="Remove this trip">✕</button></div>
