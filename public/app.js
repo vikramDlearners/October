@@ -481,6 +481,24 @@ $('#chat-form').onsubmit = async (e) => {
   }
 };
 
+// The head script applies a saved theme before paint; with none saved, the system setting decides.
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const currentTheme = () => document.documentElement.dataset.theme ?? (systemDark.matches ? 'dark' : 'light');
+const themeToggle = $('#theme-toggle');
+const paintToggle = () => {
+  const dark = currentTheme() === 'dark';
+  themeToggle.textContent = dark ? '☀️' : '🌙';
+  themeToggle.title = themeToggle.ariaLabel = dark ? 'Switch to light theme' : 'Switch to dark theme';
+};
+themeToggle.onclick = () => {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  store.set('sloth.theme', next);
+  paintToggle();
+};
+systemDark.addEventListener('change', paintToggle);
+paintToggle();
+
 $('#trip-form').location.value = store.get('sloth.location', '');
 say('bot', GREETING);
 renderTrips();

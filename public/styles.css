@@ -18,10 +18,33 @@
   --hero-ink: #f6f3ea;
   --shadow: 0 1px 2px rgb(40 35 20 / 6%), 0 8px 24px rgb(40 35 20 / 7%);
   --radius: 18px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #171713;
+  --card: #211f1a;
+  --ink: #ede8dc;
+  --muted: #a59e8e;
+  --line: #35322a;
+  --soft: #2a2821;
+  --accent: #8fbf6e;
+  --accent-2: #6cc4b9;
+  --accent-ink: #12130e;
+  --go: #7fd6a0;
+  --go-bg: #1c3326;
+  --wait: #eeae63;
+  --wait-bg: #3a2b19;
+  --error: #f2938c;
+  --hero-1: #1d3a1c;
+  --hero-2: #12403d;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #171713;
     --card: #211f1a;
     --ink: #ede8dc;
@@ -86,7 +109,19 @@ h3 { margin: 0; font-size: 22px; }
 }
 .tagline { margin: 6px 0 0; opacity: 0.85; max-width: 52ch; }
 
+.hero-side { display: flex; gap: 10px; align-items: center; }
 .status { display: flex; flex-wrap: wrap; gap: 6px; }
+.theme-toggle {
+  font: inherit;
+  font-size: 18px;
+  width: 40px; height: 40px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: rgb(255 255 255 / 12%);
+  border: 1px solid rgb(255 255 255 / 22%);
+  color: var(--hero-ink);
+}
+.theme-toggle:hover { background: rgb(255 255 255 / 22%); }
 .pill {
   font-size: 12px;
   font-weight: 500;

@@ -1,62 +1,135 @@
 # Sloth Trip Watcher 🦥
 
-Tell it once where you want to go, when, and how much you'll spend. It checks the weather and what's worth seeing on a schedule, and Gemma decides whether to tell you **GO** (with one timed, budgeted plan) or **NOT YET**. When the answer flips to GO, it messages you on Telegram.
+Tell the sloth where you are and how much time you have. It checks the weather, the places nearby and the local news, then gives you one plan for the weekend. The plan says where to go, when, how to get there and what to pack.
 
 Built for the Hacktoberfest Open-Source AI Challenge, Week 3 ("Slow and Steady").
 
+- **Live frontend:** https://vikramdlearners.github.io/October/
+- **Planner backend (FastAPI, Gemma):** https://github.com/vikramDlearners/October_backend
+
+## What you get
+
+You can ask in two ways.
+
+- **Plan my weekend.** Type a city or area, pick how much time you have (3 hours, half day, full day or whole weekend), and press **Find my trip**. A plan arrives in about half a minute. A sloth card with a seconds counter shows while you wait.
+- **Or just chat.** The sloth asks where you are, then how long you have, and answers with the same plan.
+
+Each plan becomes a trip card. The card opens with a **GO** verdict that gives the day, the time window and the reason for the pick. Seven tabs follow:
+
+| Tab | What it shows |
+| --- | --- |
+| Plan | A timeline of stops, plus backup places under "If plans change". |
+| How to go | Travel options chosen by distance (walk or auto, metro or bus, cab or bus, train). Each has a rough time, a fare in ₹ and a Google Maps directions link. These are estimates from straight-line distance, and the tab says so. |
+| Things to carry | A tick-off checklist. Water, wallet, ID and phone are always on it. The planner adds its own items, and an umbrella is added when rain is likely. You can add your own items. Ticks are saved per trip. |
+| Weather | The forecast strip with the chosen day highlighted, and its sunrise and sunset. |
+| Nearby | Places with their kind, distance and description, and links to the map and Wikipedia. |
+| News | What the news means for the trip, then the article links. |
+| Send | Email the plan from your own mail app, copy it, or use your device's share sheet. |
+
+The page also has these features:
+
+- **Light and dark themes.** The ☀️ / 🌙 button in the header switches between them. Your choice is saved in the browser. Until you pick one, the page follows your system setting.
+- **History.** Your last 5 trips, your location, your email and the tab you had open are kept in this browser's localStorage. Nothing about you is stored on a server.
+- **Status pills.** The header shows "Planner online" with its version, or "Planner offline".
+- **Mobile layout.** The page works at phone width (375px) without scrolling sideways.
+
 ## How it works
 
-1. You create a *watch*: destination, origin, date window, budget per person, weekends only, no rain, vibe.
-2. Every `CHECK_EVERY_HOURS` (default 12), and whenever you press **Check now**, the server:
-   - pulls a 16-day forecast from [Open-Meteo](https://open-meteo.com) (free, no key) and keeps the days inside your window,
-   - pulls top places at the destination from Google Maps via [SerpApi](https://serpapi.com),
-   - asks Gemma (`gemma-4-31b-it` via the Gemini API) for a `GO` / `NOT_YET` verdict as JSON,
-   - sends a Telegram alert the first time a given date becomes GO.
-3. The page shows each watch's verdict, the forecast strip, and a GO plan in four tabs:
-   - **Plan.** Timed stops with costs and how much of the budget they use.
-   - **How to go.** Two or three ways to travel from your origin (bus, train, cab), best first, with duration, cost per person and a tip, plus a Google Maps directions link.
-   - **Things to carry.** A tick-off checklist. Water, wallet, ID and phone are always on it, and Gemma adds items for the place and the day's weather (modest clothes for temples, an umbrella for rain). You can add your own. Ticks are saved in your browser per trip date.
-   - **Send.** Emails the whole itinerary through your own mail API (see below).
-
-### Send itinerary
-
-`POST /api/watches/:id/send` with `{"email": "you@example.com"}` posts this JSON to `ITINERARY_API_URL`:
-
-```json
-{ "to": "you@example.com", "subject": "🦥 GO to …", "text": "plain-text itinerary", "itinerary": { "destination": "…", "date": "…", "howToGo": [], "stops": [], "packing": [], "directionsUrl": "…" } }
+```
+Browser ──▶ Node server (this repo) ──▶ Trip planner API (FastAPI)
+            /api/trip/*  proxy           /status, /weekend/recommend, /weekend/chat
 ```
 
-Point it at anything that sends mail: your own relay, or a Make, Zapier or n8n webhook. If `ITINERARY_API_KEY` is set, it goes as `Authorization: Bearer <key>`. Without `ITINERARY_API_URL`, the Send button is disabled.
+The page talks only to the Node server in this repo. The server forwards `/api/trip/*` to the trip planner API at `TRIP_API_URL`. That design does three things:
 
-Each integration is optional. Without `GEMINI_API_KEY`, a weather-only rule decides. Without `SERPAPI_KEY`, Gemma suggests places from its own knowledge. Without Telegram keys, the result only shows on the page. The status pills in the header show what's live.
+- The planner's address never appears in the page, its source, or the browser's network log.
+- The planner sends no CORS headers, and the proxy adds them, so the browser can call it.
+- The planner speaks plain `http`, which an `https` page such as GitHub Pages cannot call directly. The proxy runs on `https`.
+
+The planner itself, a FastAPI service using Gemma with Open-Meteo, SerpApi and news search, lives in [October_backend](https://github.com/vikramDlearners/October_backend).
+
+### API
+
+All of these go through the proxy. Errors come back as `{"detail": "..."}`, or as `{"detail": [{"msg": "..."}]}` for validation errors. The page shows the message.
+
+| Method and path | Body | Returns |
+| --- | --- | --- |
+| `GET /api/trip/status` | none | `{status, app, version, environment, uptime_seconds, timestamp}` |
+| `POST /api/trip/weekend/recommend` | `{"location": "Chennai", "duration": "full day"}`. location is 2 to 200 characters, duration is 1 to 100. | A plan with `location`, `duration`, `hours`, `radius_km`, `weather[]`, `places[]`, `news[]`, `recommendation` and `summary`. It takes about 10 to 30 seconds. |
+| `POST /api/trip/weekend/chat` | `{"session_id": "...", "message": "..."}`. Both are optional and the message is at most 300 characters. Send `{}` to start a chat. | `{session_id, stage, reply, plan}`. `stage` goes from `location` to `duration` to `done`. `plan` is set once the stage is `done`. |
+
+`recommendation` holds `place`, `day`, `when`, `why`, `plan[]` (the timed stops), `bring[]`, `news_notes`, `backups[]` and `decided_by`.
+
+The proxy only forwards `/status` and `/weekend/*`. Any other path under `/api/trip` returns 404. When the planner can't be reached, the proxy answers `502` with a friendly message. It waits up to 150 seconds for a reply.
+
+Try it from a terminal:
+
+```bash
+curl -X POST http://localhost:3000/api/trip/weekend/recommend -H "content-type: application/json" -d '{"location":"Chennai","duration":"half day"}'
+```
 
 ## Run locally
 
-Requires Node 22.9 or newer. There are no dependencies to install.
+You need Node 22.9 or newer. There are no dependencies to install.
 
 ```bash
 cp .env.example .env
 npm run dev
 ```
 
-Open http://localhost:3000. Run every watch's check once from the terminal with `npm run check`.
+Open http://localhost:3000. The server serves the page and the proxy from the same origin. `npm run dev` restarts the server when files in `src/` change. After you pull new server code, restart it if it was started before the pull.
 
-## Frontend on its own
+`public/` is a static site with no build step. `public/config.js` decides where the page sends API calls:
 
-`public/` is a static site with no build step. The backend serves it at `/`, and you can also host it anywhere else (Render static site, Netlify, nginx). Enter the backend URL in the **Backend** bar at the top, or open the page with `?api=https://your-backend`. The browser remembers it.
+| Page served from | API calls go to |
+| --- | --- |
+| The Node server (`localhost:3000`, Render) | The same origin |
+| A static dev server on port 5173 | `http://<same host>:3000`, which must be running |
+| `*.github.io` | `https://sloth-trip-watcher.onrender.com` |
 
-The backend sends CORS headers, so any origin can call it by default. Set `CORS_ORIGIN` to the frontend's origin to lock that down. An `https://` frontend can only talk to an `https://` backend, because browsers block http calls from https pages.
+### Environment
 
-## Deploy to Render
+| Variable | Purpose |
+| --- | --- |
+| `TRIP_API_URL` | Where the proxy forwards `/api/trip/*`. This is the planner's address, and it stays on the server. |
+| `CORS_ORIGIN` | The origin allowed to call the server from a separately hosted page, for example `https://vikramdlearners.github.io`. The default is `*`. |
+| `PORT` | The port to listen on. The default is 3000. |
 
-`render.yaml` defines one web service with a 1 GB disk for `data/watches.json` and runs the schedule inside the process. Create a Blueprint from the repo on Render, then set `GEMINI_API_KEY`, `SERPAPI_KEY`, `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in the dashboard.
+`.env.example` also lists keys for the older watch feature (`GEMINI_API_KEY`, `SERPAPI_KEY`, `TELEGRAM_*`, `ITINERARY_API_*`, `CHECK_EVERY_HOURS`). Each is optional, and the trip planner doesn't need any of them.
+
+## Deploy
+
+There are two parts. GitHub Pages hosts the page and Render hosts the Node proxy.
+
+### Frontend on GitHub Pages
+
+`.github/workflows/pages.yml` publishes `public/` to GitHub Pages on every push to `main` that touches `public/`. You can also start it by hand from the Actions tab. The repo's Pages source is set to **GitHub Actions**.
+
+### Proxy on Render
+
+`render.yaml` is a Render Blueprint for one web service named `sloth-trip-watcher`.
+
+1. On https://dashboard.render.com, choose **New → Blueprint** and pick this repo.
+2. Accept the service. `TRIP_API_URL` and `CORS_ORIGIN` are already filled in. The keys marked `sync: false` belong to the older watch feature and can stay empty.
+3. Once it's live, open `https://sloth-trip-watcher.onrender.com/api/trip/status` and check for `"status":"ok"`.
+
+If Render gives the service a different URL, put that URL in `public/config.js` and push. The Pages workflow redeploys the page.
+
+A free Render service sleeps when idle. The first request after a sleep can take about a minute more, and the proxy waits long enough for it.
 
 ## Code map
 
-- `src/server.js` serves the API and the static page, and runs the schedule.
-- `src/sources.js` handles geocoding, the forecast and places.
-- `src/decide.js` holds the Gemma prompt, the reply parser and the rule-based fallback.
-- `src/check.js` runs one check end to end and sends the Telegram alert.
-- `src/send.js` builds the itinerary and posts it to `ITINERARY_API_URL`.
-- `src/store.js` keeps watches in a JSON file under `DATA_DIR`.
-- `public/` is the vanilla HTML, CSS and JS frontend.
+- `src/server.js` runs the HTTP server. It serves `public/`, proxies `/api/trip/*` to the planner, and still hosts the older watch API (`/api/health`, `/api/watches*`).
+- `public/index.html` holds the page layout and the head script that applies the saved theme before the first paint.
+- `public/app.js` holds all of the page logic. It covers the form, the chat, the trip cards and tabs, the travel estimates, the checklist, sending, history and the theme toggle.
+- `public/config.js` sets `API_ORIGIN`, the address of the proxy for each place the page is hosted.
+- `public/styles.css` holds the styles. The colours are CSS variables, with a dark set used by `data-theme="dark"` or by the system setting.
+- `render.yaml` is the Render Blueprint.
+- `.github/workflows/pages.yml` is the GitHub Pages deploy.
+- `src/sources.js`, `src/decide.js`, `src/check.js`, `src/check-all.js`, `src/send.js` and `src/store.js` belong to the older watch feature. That feature checks saved watches on a schedule, asks Gemma for a GO or NOT YET, and alerts on Telegram. The current page doesn't use it.
+
+## Known issues
+
+- **Place names can resolve to the wrong country.** Some names that exist in more than one country resolve abroad. "Bangalore", for example, resolves to a town in Pakistan. Adding a state, as in "Bengaluru, Karnataka", avoids this. The fix belongs in the planner's geocoder, by limiting the lookup to India.
+- **Travel times and fares are estimates.** The page computes them from straight-line distance, because the planner doesn't return routes yet.
+- **Send uses `mailto:`.** It opens your own mail app instead of sending from a server.

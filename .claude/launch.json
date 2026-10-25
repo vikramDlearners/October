@@ -4,13 +4,8 @@
     {
       "name": "sloth-trip-watcher",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],      "port": 3000
-    },
-    {
-      "name": "frontend-only",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["-e", "const h=require('http'),f=require('fs'),p=require('path');const t={'.html':'text/html','.js':'text/javascript','.css':'text/css'};h.createServer((q,s)=>{const u=new URL(q.url,'http://x').pathname;const file=p.join('public',u==='/'?'index.html':u);f.readFile(file,(e,b)=>{if(e){s.writeHead(404);return s.end()}s.writeHead(200,{'content-type':t[p.extname(file)]||'application/octet-stream'});s.end(b)})}).listen(5173,()=>console.log('frontend on 5173'))"],
-      "port": 5173
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
     }
   ]
 }
