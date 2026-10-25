@@ -5,7 +5,7 @@ Tell the sloth where you are and how much time you have. It checks the weather, 
 Built for the Hacktoberfest Open-Source AI Challenge, Week 3 ("Slow and Steady").
 
 - **Frontend repo (this repo):** https://github.com/vikramDlearners/October
-- **Backend repo (planner API, FastAPI + Gemma):** https://github.com/vikramDlearners/October_backend
+- **Backend repo (planner API, FastAPI + Gemini/Gemma):** https://github.com/vikramDlearners/October_backend
 - **Live frontend:** https://vikramdlearners.github.io/October/
 
 ## What you get
@@ -47,7 +47,16 @@ The page talks only to the Node server in this repo. The server forwards `/api/t
 - The planner sends no CORS headers, and the proxy adds them, so the browser can call it.
 - The planner speaks plain `http`, which an `https` page such as GitHub Pages cannot call directly. The proxy runs on `https`.
 
-The planner itself, a FastAPI service using Gemma with Open-Meteo, SerpApi and news search, lives in [October_backend](https://github.com/vikramDlearners/October_backend).
+The planner itself, a FastAPI service using Gemini and Gemma with Open-Meteo, places and news lookups, lives in [October_backend](https://github.com/vikramDlearners/October_backend).
+
+### AI models
+
+- **Gemini (`gemini-3.8-flash`) is the main planner.** It gets the real weather, places and news, picks one place from that list, and writes the plan: day, time window, reason, timed stops, packing list, news notes and backups. It answers as strict JSON in a few seconds.
+- **Gemma (`gemma4:e4b` on local Ollama) is the backup.** If there is no Gemini key or the call fails, the same prompt and JSON schema go to Gemma on the server. It takes about 3–4 minutes on CPU, but needs no cloud.
+- **Simple rules are the last fallback.** They pick the driest day, and prefer indoor places if that day is rainy.
+- **Every answer is checked.** A plan that names a place outside the real candidate list is rejected, and the next option is tried. `decided_by` shows which one answered.
+- **Watch mode (Telegram alerts).** Gemma (`gemma-4-31b-it`) decides GO or NOT YET for a saved trip. Gemini Flash with Google Search then looks up current bus and train fares, entry fees and food prices. A plan over budget becomes NOT YET.
+- **Planned: Hermes.** Hermes (Nous Research) would be a Telegram chat front end on its own bot, turning messages like "watch Ooty for November weekends, ₹4000" into watch API calls. Gemma still makes the trip decision. It isn't built yet.
 
 ### API
 
